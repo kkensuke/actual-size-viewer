@@ -3,125 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>実寸表示＆キャリブレーションツール / Actual Size Calibration Tool</title>
+    <title>実寸表示＆キャリブレーションツール</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            padding: 20px 20px 20px 80px; 
+            padding: 80px 20px 20px 80px;
             max-width: 1000px;
             margin: auto;
             color: #333;
             position: relative;
         }
-        /* Ruler canvas styling */
-        .ruler {
+        .ruler-left {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 60px;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 60px; height: 100vh;
             background-color: #f8f9fa;
             border-right: 2px solid #adb5bd;
             z-index: 1000;
         }
-        /* Language toggle button styling */
+        .ruler-top {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 60px;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #adb5bd;
+            z-index: 999;
+        }
+        .ruler-corner {
+            position: fixed;
+            top: 0; left: 0;
+            width: 60px; height: 60px;
+            background-color: #f8f9fa;
+            border-right: 2px solid #adb5bd;
+            border-bottom: 2px solid #adb5bd;
+            z-index: 1001;
+        }
         .lang-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+            position: fixed;
+            top: 68px; right: 20px;
             padding: 8px 16px;
-            background-color: #333;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
+            background-color: #333; color: #fff;
+            border: none; border-radius: 4px;
+            cursor: pointer; font-size: 14px; z-index: 998;
         }
-        .lang-toggle:hover {
-            background-color: #555;
-        }
-        /* Control panel layout */
-        .control-panel {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            margin-top: 50px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        .input-group label {
-            display: inline-block;
-            width: 100px;
-            font-weight: bold;
-        }
-        input[type="number"] {
-            width: 100px;
-            padding: 5px;
-            font-size: 16px;
-        }
-        select {
-            padding: 5px;
-            font-size: 16px;
-            width: 114px;
-        }
-        input[type="range"] {
-            width: 100%;
-            margin-top: 10px;
-        }
-        .canvas-area {
-            padding: 20px 0;
-        }
-        /* Box styling for both reference card and target size */
+        .lang-toggle:hover { background-color: #555; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: inline-block; width: 100px; font-weight: bold; }
+        input[type="number"] { width: 100px; padding: 5px; font-size: 16px; }
+        select { padding: 5px; font-size: 16px; width: 114px; }
+        input[type="range"] { width: 100%; margin-top: 10px; }
+        .canvas-area { padding: 20px 0; }
         .card, .target {
-            box-sizing: border-box; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: bold;
-            color: #555;
+            box-sizing: border-box;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; margin-bottom: 30px;
+            font-weight: bold; color: #555;
         }
-        .card {
-            background: #e9ecef;
-            border: 2px solid #adb5bd;
-            border-radius: 8px;
-        }
-        .target {
-            background: #cce5ff;
-            border: 2px solid #0056b3;
-        }
-        h2 {
-            margin-right: 100px;
-        }
-        h3 {
-            border-bottom: 2px solid #eee;
-            padding-bottom: 5px;
-        }
+        .card { background: #e9ecef; border: 2px solid #adb5bd; border-radius: 8px; }
+        .target { background: #cce5ff; border: 2px solid #0056b3; }
+        h2 { margin-right: 100px; }
+        h3 { border-bottom: 2px solid #eee; padding-bottom: 5px; }
     </style>
 </head>
 <body>
+    <canvas id="rulerTopCanvas" class="ruler-top"></canvas>
+    <canvas id="rulerLeftCanvas" class="ruler-left"></canvas>
+    <div class="ruler-corner"></div>
 
-    <canvas id="rulerCanvas" class="ruler"></canvas>
-    
     <button id="langBtn" class="lang-toggle" onclick="toggleLanguage()">English</button>
 
     <h2 id="pageTitle">実寸表示＆キャリブレーションツール</h2>
-
-    <div class="control-panel">
+    <div class="canvas-area">
         <h3 id="calibTitle">1. 画面サイズの微調整（キャリブレーション）</h3>
         <p id="calibDesc">お手元のクレジットカードや運転免許証を画面の「基準カード」に当てて、スライダーを動かし、実際のカードと画面の枠がぴったり重なるように調整してください。</p>
         <div class="input-group">
             <input type="range" id="scaleSlider" min="20" max="80" value="45" step="0.1">
         </div>
 
+        <h3 id="cardTitle">基準カード (幅8.56cm × 高さ5.4cm)</h3>
+        <div id="card" class="card">ここにカードを<br>当ててください</div>
+
         <h3 id="sizeTitle">2. 表示したいサイズの入力</h3>
         <p id="sizeDesc">確認したい長さを入力してください。</p>
-        
         <div class="input-group">
             <label id="unitLabel">単位:</label>
             <select id="unitSelect">
@@ -129,7 +92,6 @@
                 <option value="in">inch</option>
             </select>
         </div>
-
         <div class="input-group">
             <label id="widthLabel">幅:</label>
             <input type="number" id="inputWidth" value="10" step="0.1" min="0.1">
@@ -138,35 +100,30 @@
             <label id="heightLabel">高さ:</label>
             <input type="number" id="inputHeight" value="10" step="0.1" min="0.1">
         </div>
-    </div>
-
-    <div class="canvas-area">
-        <h3 id="cardTitle">基準カード (幅8.56cm × 高さ5.4cm)</h3>
-        <div id="card" class="card">ここにカードを<br>当ててください</div>
 
         <h3 id="targetTitle">確認したいサイズ</h3>
         <div id="target" class="target"></div>
     </div>
 
     <script>
-        // DOM Elements
-        const slider = document.getElementById('scaleSlider');
+        const slider    = document.getElementById('scaleSlider');
         const unitSelect = document.getElementById('unitSelect');
-        const inputW = document.getElementById('inputWidth');
-        const inputH = document.getElementById('inputHeight');
-        const cardEl = document.getElementById('card');
-        const targetEl = document.getElementById('target');
-        const rulerCanvas = document.getElementById('rulerCanvas');
-        const ctx = rulerCanvas.getContext('2d');
+        const inputW    = document.getElementById('inputWidth');
+        const inputH    = document.getElementById('inputHeight');
+        const cardEl    = document.getElementById('card');
+        const targetEl  = document.getElementById('target');
+        const rulerLeftCanvas = document.getElementById('rulerLeftCanvas');
+        const ctxLeft   = rulerLeftCanvas.getContext('2d');
+        const rulerTopCanvas  = document.getElementById('rulerTopCanvas');
+        const ctxTop    = rulerTopCanvas.getContext('2d');
 
-        // Standard credit card dimensions in cm
-        const CARD_W = 8.56; 
-        const CARD_H = 5.398; 
+        const CARD_W    = 8.56;
+        const CARD_H    = 5.398;
+        const RULER_SIZE = 60;   // px — thickness / corner size
+        const LABEL_OFFSET = 5; // px — how far the "0" label is nudged away from the corner
 
-        // Current language state
-        let currentLang = 'ja'; 
+        let currentLang = 'ja';
 
-        // i18n text data
         const texts = {
             ja: {
                 pageTitle: "実寸表示＆キャリブレーションツール",
@@ -174,9 +131,7 @@
                 calibDesc: "お手元のクレジットカードや運転免許証を画面の「基準カード」に当てて、スライダーを動かし、実際のカードと画面の枠がぴったり重なるように調整してください。",
                 sizeTitle: "2. 表示したいサイズの入力",
                 sizeDesc: "確認したい長さを入力してください。",
-                unitLabel: "単位:",
-                widthLabel: "幅:",
-                heightLabel: "高さ:",
+                unitLabel: "単位:", widthLabel: "幅:", heightLabel: "高さ:",
                 cardTitle: "基準カード (幅8.56cm × 高さ5.4cm)",
                 targetTitle: "確認したいサイズ",
                 cardText: "ここにカードを<br>当ててください",
@@ -188,9 +143,7 @@
                 calibDesc: "Place a standard credit card or driver's license against the 'Reference Card' on the screen. Adjust the slider until the on-screen box perfectly matches your physical card.",
                 sizeTitle: "2. Input Desired Size",
                 sizeDesc: "Enter the width and height you want to display.",
-                unitLabel: "Unit:",
-                widthLabel: "Width:",
-                heightLabel: "Height:",
+                unitLabel: "Unit:", widthLabel: "Width:", heightLabel: "Height:",
                 cardTitle: "Reference Card (W 8.56cm × H 5.4cm)",
                 targetTitle: "Desired Size",
                 cardText: "Place your<br>card here",
@@ -198,141 +151,167 @@
             }
         };
 
-        // Function to toggle between languages
         function toggleLanguage() {
             currentLang = (currentLang === 'ja') ? 'en' : 'ja';
             updateTexts();
         }
 
-        // Function to update the text content based on selected language
         function updateTexts() {
             const t = texts[currentLang];
-            document.getElementById('pageTitle').innerText = t.pageTitle;
-            document.getElementById('calibTitle').innerText = t.calibTitle;
-            document.getElementById('calibDesc').innerText = t.calibDesc;
-            document.getElementById('sizeTitle').innerText = t.sizeTitle;
-            document.getElementById('sizeDesc').innerText = t.sizeDesc;
-            document.getElementById('unitLabel').innerText = t.unitLabel;
-            document.getElementById('widthLabel').innerText = t.widthLabel;
+            document.getElementById('pageTitle').innerText   = t.pageTitle;
+            document.getElementById('calibTitle').innerText  = t.calibTitle;
+            document.getElementById('calibDesc').innerText   = t.calibDesc;
+            document.getElementById('sizeTitle').innerText   = t.sizeTitle;
+            document.getElementById('sizeDesc').innerText    = t.sizeDesc;
+            document.getElementById('unitLabel').innerText   = t.unitLabel;
+            document.getElementById('widthLabel').innerText  = t.widthLabel;
             document.getElementById('heightLabel').innerText = t.heightLabel;
-            document.getElementById('cardTitle').innerText = t.cardTitle;
+            document.getElementById('cardTitle').innerText   = t.cardTitle;
             document.getElementById('targetTitle').innerText = t.targetTitle;
-            document.getElementById('langBtn').innerText = t.langBtn;
+            document.getElementById('langBtn').innerText     = t.langBtn;
             cardEl.innerHTML = t.cardText;
-            
-            // Update HTML lang attribute for accessibility and SEO
             document.documentElement.lang = currentLang;
         }
 
-        // Function to draw the side ruler
-        function drawRuler(scale, unit) {
-            // Handle high DPI displays for crisp rendering
+        // ── Left (vertical) ruler ──────────────────────────────────────────
+        // Ticks start at y = RULER_SIZE (the intersection corner).
+        // The "0" label is nudged DOWN by LABEL_OFFSET so it clears the corner square.
+        function drawLeftRuler(scale, unit) {
             const dpr = window.devicePixelRatio || 1;
-            const width = 60;
-            const height = window.innerHeight;
+            const w = RULER_SIZE, h = window.innerHeight;
 
-            rulerCanvas.width = width * dpr;
-            rulerCanvas.height = height * dpr;
-            rulerCanvas.style.width = width + 'px';
-            rulerCanvas.style.height = height + 'px';
+            rulerLeftCanvas.width  = w * dpr;
+            rulerLeftCanvas.height = h * dpr;
+            rulerLeftCanvas.style.width  = w + 'px';
+            rulerLeftCanvas.style.height = h + 'px';
 
-            ctx.scale(dpr, dpr);
-            ctx.clearRect(0, 0, width, height);
+            ctxLeft.scale(dpr, dpr);
+            ctxLeft.clearRect(0, 0, w, h);
+            ctxLeft.fillStyle   = '#333';
+            ctxLeft.strokeStyle = '#333';
+            ctxLeft.lineWidth   = 1;
+            ctxLeft.font        = '10px Arial';
+            ctxLeft.textAlign   = 'right';
 
-            ctx.fillStyle = '#333';
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
+            const origin = RULER_SIZE;
+
+            const drawTick = (i, pxPerUnit, divisions) => {
+                const y = origin + i * pxPerUnit;
+                if (y > h) return;
+
+                ctxLeft.beginPath();
+                if (i % divisions === 0) {
+                    // major tick (1 cm or 1 inch)
+                    ctxLeft.moveTo(28, y); ctxLeft.lineTo(58, y);
+                    // "0" label: nudge below the tick so it clears the corner
+                    const labelY = (i === 0) ? y + LABEL_OFFSET : y;
+                    ctxLeft.textBaseline = (i === 0) ? 'top' : 'middle';
+                    ctxLeft.fillText((i / divisions).toString(), 24, labelY);
+                } else if (divisions === 10 && i % 5 === 0) {
+                    ctxLeft.moveTo(40, y); ctxLeft.lineTo(58, y);
+                } else if (divisions === 16 && i % 8 === 0) {
+                    ctxLeft.moveTo(38, y); ctxLeft.lineTo(58, y);
+                } else if (divisions === 16 && i % 4 === 0) {
+                    ctxLeft.moveTo(45, y); ctxLeft.lineTo(58, y);
+                } else if (divisions === 16 && i % 2 === 0) {
+                    ctxLeft.moveTo(51, y); ctxLeft.lineTo(58, y);
+                } else {
+                    ctxLeft.moveTo(50, y); ctxLeft.lineTo(58, y);
+                }
+                ctxLeft.stroke();
+            };
 
             if (unit === 'cm') {
-                // Render cm ruler (1mm increments)
                 const pxPerMm = scale / 10;
-                for (let i = 0; i * pxPerMm <= height; i++) {
-                    const y = i * pxPerMm;
-                    ctx.beginPath();
-                    if (i % 10 === 0) { 
-                        // 1cm mark
-                        ctx.moveTo(30, y);
-                        ctx.lineTo(60, y);
-                        ctx.fillText((i / 10).toString(), 25, y);
-                    } else if (i % 5 === 0) { 
-                        // 5mm mark
-                        ctx.moveTo(45, y);
-                        ctx.lineTo(60, y);
-                    } else { 
-                        // 1mm mark
-                        ctx.moveTo(52, y);
-                        ctx.lineTo(60, y);
-                    }
-                    ctx.stroke();
-                }
-            } else if (unit === 'in') {
-                // Render inch ruler (1/16 inch increments)
-                const pxPer16thInch = (scale * 2.54) / 16;
-                for (let i = 0; i * pxPer16thInch <= height; i++) {
-                    const y = i * pxPer16thInch;
-                    ctx.beginPath();
-                    if (i % 16 === 0) { 
-                        // 1 inch mark
-                        ctx.moveTo(30, y);
-                        ctx.lineTo(60, y);
-                        ctx.fillText((i / 16).toString(), 25, y);
-                    } else if (i % 8 === 0) { 
-                        // 1/2 inch mark
-                        ctx.moveTo(40, y);
-                        ctx.lineTo(60, y);
-                    } else if (i % 4 === 0) { 
-                        // 1/4 inch mark
-                        ctx.moveTo(48, y);
-                        ctx.lineTo(60, y);
-                    } else if (i % 2 === 0) { 
-                        // 1/8 inch mark
-                        ctx.moveTo(53, y);
-                        ctx.lineTo(60, y);
-                    } else { 
-                        // 1/16 inch mark
-                        ctx.moveTo(56, y);
-                        ctx.lineTo(60, y);
-                    }
-                    ctx.stroke();
-                }
+                for (let i = 0; origin + i * pxPerMm <= h; i++) drawTick(i, pxPerMm, 10);
+            } else {
+                const pxPer16 = (scale * 2.54) / 16;
+                for (let i = 0; origin + i * pxPer16 <= h; i++) drawTick(i, pxPer16, 16);
             }
         }
 
-        // Function to update dimensions of on-screen elements
-        function updateDisplay() {
-            // scale represents pixels per cm
-            const scale = parseFloat(slider.value); 
-            const unit = unitSelect.value;
-            const targetW = parseFloat(inputW.value) || 0;
-            const targetH = parseFloat(inputH.value) || 0;
+        // ── Top (horizontal) ruler ─────────────────────────────────────────
+        // Ticks start at x = RULER_SIZE (the intersection corner).
+        // Ticks hang DOWN from the bottom edge.
+        // The "0" label is nudged RIGHT by LABEL_OFFSET so it clears the corner square.
+        function drawTopRuler(scale, unit) {
+            const dpr = window.devicePixelRatio || 1;
+            const w = window.innerWidth, h = RULER_SIZE;
 
-            // Multiplier to convert inches to cm if 'in' is selected
-            const multiplier = (unit === 'in') ? 2.54 : 1;
+            rulerTopCanvas.width  = w * dpr;
+            rulerTopCanvas.height = h * dpr;
+            rulerTopCanvas.style.width  = w + 'px';
+            rulerTopCanvas.style.height = h + 'px';
 
-            // Update reference card dimensions (always based in cm)
-            cardEl.style.width = (CARD_W * scale) + 'px';
-            cardEl.style.height = (CARD_H * scale) + 'px';
+            ctxTop.scale(dpr, dpr);
+            ctxTop.clearRect(0, 0, w, h);
+            ctxTop.fillStyle   = '#333';
+            ctxTop.strokeStyle = '#333';
+            ctxTop.lineWidth   = 1;
+            ctxTop.font        = '10px Arial';
+            ctxTop.textBaseline = 'bottom';
 
-            // Update target box dimensions (reflects selected unit)
-            targetEl.style.width = (targetW * multiplier * scale) + 'px';
-            targetEl.style.height = (targetH * multiplier * scale) + 'px';
-            targetEl.innerHTML = targetW + unit + '<br>×<br>' + targetH + unit;
+            const origin = RULER_SIZE;
+            const base   = h - 2; // bottom edge of ruler bar
 
-            // Redraw the canvas ruler
-            drawRuler(scale, unit);
+            const drawTick = (i, pxPerUnit, divisions) => {
+                const x = origin + i * pxPerUnit;
+                if (x > w) return;
+
+                ctxTop.beginPath();
+                if (i % divisions === 0) {
+                    // major tick
+                    ctxTop.moveTo(x, base); ctxTop.lineTo(x, base - 28);
+                    // "0" label: nudge right of the tick so it clears the corner
+                    const labelX = (i === 0) ? x + LABEL_OFFSET : x;
+                    ctxTop.textAlign = (i === 0) ? 'left' : 'center';
+                    ctxTop.fillText((i / divisions).toString(), labelX, base - 30);
+                } else if (divisions === 10 && i % 5 === 0) {
+                    ctxTop.moveTo(x, base); ctxTop.lineTo(x, base - 16);
+                } else if (divisions === 16 && i % 8 === 0) {
+                    ctxTop.moveTo(x, base); ctxTop.lineTo(x, base - 18);
+                } else if (divisions === 16 && i % 4 === 0) {
+                    ctxTop.moveTo(x, base); ctxTop.lineTo(x, base - 12);
+                } else if (divisions === 16 && i % 2 === 0) {
+                    ctxTop.moveTo(x, base); ctxTop.lineTo(x, base - 7);
+                } else {
+                    ctxTop.moveTo(x, base); ctxTop.lineTo(x, base - 4);
+                }
+                ctxTop.stroke();
+            };
+
+            if (unit === 'cm') {
+                const pxPerMm = scale / 10;
+                for (let i = 0; origin + i * pxPerMm <= w; i++) drawTick(i, pxPerMm, 10);
+            } else {
+                const pxPer16 = (scale * 2.54) / 16;
+                for (let i = 0; origin + i * pxPer16 <= w; i++) drawTick(i, pxPer16, 16);
+            }
         }
 
-        // Event Listeners
+        function updateDisplay() {
+            const scale   = parseFloat(slider.value);
+            const unit    = unitSelect.value;
+            const targetW = parseFloat(inputW.value) || 0;
+            const targetH = parseFloat(inputH.value) || 0;
+            const mult    = (unit === 'in') ? 2.54 : 1;
+
+            cardEl.style.width  = (CARD_W * scale) + 'px';
+            cardEl.style.height = (CARD_H * scale) + 'px';
+            targetEl.style.width  = (targetW * mult * scale) + 'px';
+            targetEl.style.height = (targetH * mult * scale) + 'px';
+            targetEl.innerHTML = targetW + unit + '<br>×<br>' + targetH + unit;
+
+            drawLeftRuler(scale, unit);
+            drawTopRuler(scale, unit);
+        }
+
         slider.addEventListener('input', updateDisplay);
         unitSelect.addEventListener('change', updateDisplay);
         inputW.addEventListener('input', updateDisplay);
         inputH.addEventListener('input', updateDisplay);
         window.addEventListener('resize', updateDisplay);
 
-        // Initialization on page load
         updateTexts();
         updateDisplay();
     </script>
